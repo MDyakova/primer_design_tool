@@ -1,0 +1,169 @@
+/* Set the maximum width of the page content */
+.page-content {
+    max-width: 1200px; /* Adjust this value as needed */
+    margin: 0 auto; /* Center the content horizontally */
+}
+
+/* Enable word-wrap for long words */
+.wrap-text {
+    word-wrap: break-word;
+}
+
+/* Enable text wrapping within the container */
+.container {
+    white-space: pre-line;
+}
+
+body {
+    background-color: #d8edf0; /* Set your desired background color here */
+}
+
+/* CSS classes for different text colors */
+.blue-text {
+    color: rgb(0, 0, 238);
+    font-size: 18px;
+}
+
+.blue-light-text {
+    color: rgb(55, 55, 196);
+    font-size: 14px;
+}
+
+.green-text {
+    color: rgb(0, 201, 87);
+    font-size: 18px;
+    /* background-color:rgb(249, 248, 248) */
+}
+
+.black-text {
+    color: rgb(5, 5, 5);
+    font-size: 14px;
+}
+
+.peach-text {
+    color: rgb(205, 179, 139);
+    font-size: 14px;
+    /* background-color:rgb(249, 248, 248) */
+}
+
+.red-text {
+    color: rgb(255, 48, 48);
+    font-size: 14px;
+    /* background-color:rgb(249, 248, 248) */
+}
+
+.orange-text {
+    color: rgb(255, 97, 3);
+    font-size: 14px;
+    /* background-color:rgb(249, 248, 248) */
+}
+
+.greenlight-text {
+    color: rgb(205, 255, 3);
+    font-size: 18px;
+    /* background-color:rgb(249, 248, 248) */
+}
+
+.redlight-text {
+    color: rgb(224, 68, 29);
+    font-size: 14px;
+    /* background-color:rgb(249, 248, 248) */
+}
+
+.purple-text {
+    color: rgb(139, 29, 224);
+    font-size: 14px;
+    /* background-color:rgb(249, 248, 248) */
+}
+
+.grey-text {
+    color: rgb(181, 181, 177);
+    font-size: 14px;
+    /* background-color:rgb(249, 248, 248) */
+}
+
+.violent-text {
+    color: rgb(118, 73, 191);
+    font-size: 16px;
+    /* background-color:rgb(249, 248, 248) */
+}
+
+.wave-text {
+    color: rgb(5, 240, 201);
+    font-size: 14px;
+    /* background-color:rgb(249, 248, 248) */
+}
+
+.form-group {
+    /* display: flex;
+    flex-direction: column; */
+    width: 900px;
+    gap: 10px; /* Adjust the gap value as needed */
+}
+
+.submit-button {
+    width: 85px; /* Set the width as needed */
+}
+
+.open_file {
+    width: 270px; /* Set the width as needed */
+}
+
+/* Apply styles to the table */
+.dataframe {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+/* Apply styles to table headers */
+.dataframe th {
+    background-color: #f2f2f2;
+    text-align: left;
+    padding: 8px;
+}
+
+/* Apply styles to table cells */
+.dataframe td {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+/* Apply alternate row colors */
+.dataframe tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.fixed-width {
+    width: 700px; /* Adjust the width as needed */
+    display: inline-block; /* Ensures inline display */
+    overflow: hidden; /* Prevents overflow */
+    white-space: wrap; /* Prevents wrapping */
+    text-overflow: ellipsis; /* Adds ellipsis if content overflows */
+}
+
+.container {
+    font-family: monospace; /* Use monospace font to ensure equal width for characters */
+    line-height: 1.2; /* Adjust line height for better readability */
+}
+.string {
+    font-family: monospace; /* Use monospace font to ensure equal width for characters */
+    font-size: 18px; /* Set font size to 20 pixels */
+}
+
+/* .form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.form-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 15px;
+}
+.form-group label {
+    flex: 1;
+    margin-right: 10px;
+    text-align: right;
+} */

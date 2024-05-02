@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Primer design tool</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('.group').prop('disabled', false);
+        });
+    </script>
+
+</head>
+<body>
+    <img src="/static/logo.png" alt="Positioned Image" class="positioned-image" style="position: absolute; right: 50px; top: 20px;">
+    <h1>Primer design tool</h1>
+    <h3>Get started designing primers.</h3>
+    <h3>1. Enter gene name, NCBI id for transcript and guide sequences. </h3>
+    <form method="POST">
+        {{ forms['gene_info_form'].hidden_tag() }}
+        <div>
+            {{ forms['gene_info_form'].text_field.label }} {{ forms['gene_info_form'].text_field }}
+            {{ forms['gene_info_form'].text_field2.label }} {{ forms['gene_info_form'].text_field2 }}
+            <h4></h4>
+        </div>
+        <div>
+            <h4>Input two guides left and right separated by semicolons</h4>
+            {{ forms['gene_info_form'].text_field3_2.label }} {{ forms['gene_info_form'].text_field3_2 }}
+            {{ forms['gene_info_form'].text_field3.label }} {{ forms['gene_info_form'].text_field3 }}
+            <h4></h4>
+        </div>
+        <div>
+            <h4>Input primer location parameters:</h4>
+            <h4>distances range from cutsite and amplicon size range</h4>
+            {{ forms['gene_info_form'].text_field4.label }} {{ forms['gene_info_form'].text_field4 }}
+            {{ forms['gene_info_form'].text_field5.label }} {{ forms['gene_info_form'].text_field5 }}
+            {{ forms['gene_info_form'].text_field6.label }} {{ forms['gene_info_form'].text_field6 }}
+            {{ forms['gene_info_form'].text_field7.label }} {{ forms['gene_info_form'].text_field7 }}
+            <h4></h4>
+        </div>
+        <div>
+            <input type="submit" value="Submit" name="gene_info_form_submit">
+        </div>
+    </form>
+    <h4>{{ out_dict['gene_dict']  | safe }}</h4>
+
+    <h3>2. Blast primers tool</h3>
+    <h4>Click <a href="{{ links.Blast }}" target="_blank">here</a> to go to the Blast site.</h4>
+    <h4></h4>
+    <form method="POST">
+        {{ forms['blast_info_form'].hidden_tag() }}
+        <div>
+            {{ forms['blast_info_form'].text_field8.label }} {{ forms['blast_info_form'].text_field8 }}
+            <h4></h4>
+        </div>
+        <div>
+            <input type="submit" value="Submit" name="blast_info_form_submit">
+        </div>
+    </form>
+ 
+</body>
+</html>
