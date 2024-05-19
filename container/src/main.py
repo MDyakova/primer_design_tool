@@ -38,7 +38,9 @@ out_dict = {
     "search_sequence":"",
     "blast_url":"https://www.ncbi.nlm.nih.gov/tools/primer-blast/",
     "blast_id":"",
-    "gene_nt_id":""
+    "gene_nt_id":"",
+    "tables":[],
+    "tables_df":[]
 
 
 }
@@ -217,13 +219,95 @@ def index(out_dict):
             blast_id = blast_info_form.text_field8.data
             out_dict['blast_id'] = blast_id
 
+            checkbox_all_value = request.form.get("checkbox_all")
+
+            if checkbox_all_value == 'all_results':
+                return_all = True
+            else:
+                return_all = False
+
             all_primers = blast_results(out_dict['blast_id'], 
                                         out_dict['gene_nt_id'], 
                                         out_dict['amplicon_start'], 
                                         out_dict['amplicon_end'], 
                                         out_dict['search_sequence'], 
                                         out_dict["gene_name"], 
-                                        out_dict["guide_name"])
+                                        out_dict["guide_name"],
+                                        return_all=return_all)
+
+            tables=[all_primers.to_html(classes='data')]
+            out_dict['tables'] = tables
+            out_dict['tables_df'] = [all_primers]
+           
+            selected_ids = request.form.getlist('checkbox')
+
+            # # Example DataFrame
+            # all_primers = pd.DataFrame({
+            #     'ID': [1, 2, 3],
+            #     'Name': ['Primer1', 'Primer2', 'Primer3'],
+            #     'Sequence': ['ATCG', 'CGTA', 'GTAC'],
+            #     # Add other columns as necessary
+            # })
+
+            # Add a column for checkboxes
+            all_primers['ID'] = all_primers.index
+            all_primers['ID'] = all_primers['ID'].apply(lambda x: f'<input type="checkbox" name="checkbox" value="{x}">')
+
+            # Reorder columns to put 'Select' first
+            cols = all_primers.columns.tolist()
+            cols = cols[-1:] + cols[:-1]
+            all_primers = all_primers[cols]
+
+            html_table = all_primers.to_html(classes='data', escape=False, index=False)
+
+            tables = [html_table]
+            out_dict['tables'] = tables
+
+        if "checkbox_table_submit" in request.form:
+            selected_ids = request.form.getlist('checkbox')
+            # out_dict["gene_dict"] = selected_ids
+
+            all_primers_selected = all_primers[all_primers['ID'].apply(lambda p: p in selected_ids)]
+            all_primers_selected.to_csv('src/static/outputs/' + out_dict["gene_name"]  + '/' + out_dict["guide_name"] 
+                               + ' ' + guide_name +'__selected_primers.csv', index=None)
+            
+            output_files = os.listdir('src/static/outputs/' + gene_name + '/')
+
+            file_names = ('Primers_' 
+                            + out_dict["gene_name"] 
+                            + '_' 
+                            + out_dict["guide_name"]
+                            + '_'
+                            + date_today)
+            
+            # Create a BytesIO object to store the ZIP file
+            zip_buffer = BytesIO()
+
+            # Create a ZipFile object
+            with zipfile.ZipFile(
+                zip_buffer, "a", zipfile.ZIP_DEFLATED, False
+            ) as zip_file:
+                
+                for file_name in output_files:
+                    # Add the FASTA file to the ZIP file with a custom name
+                    zip_file.write('src/static/outputs/' + gene_name + '/' + file_name, 
+                                   arcname=file_name)
+
+            # Move the buffer's position to the beginning to ensure all the data is read
+            zip_buffer.seek(0)
+
+            # Return the ZIP file as an attachment
+            return send_file(
+                zip_buffer,
+                download_name=file_names + ".zip",
+                as_attachment=True,
+            )         
+
+
+
+
+
+            
             
 
            
@@ -248,8 +332,9 @@ def index(out_dict):
         }
         
 
-        return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links
-                            #    tables=out_dict['tables']
+        return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links,
+                               tables=out_dict['tables']
+                            #    data=data
                                )
 
     # Save selected parameters to input windows
@@ -272,8 +357,9 @@ def index(out_dict):
         "blast_info_form":blast_info_form
     }
 
-    return render_template("home.html", out_dict=out_dict, forms=forms,links=short_links
-                        #    tables=out_dict['tables']
+    return render_template("home.html", out_dict=out_dict, forms=forms,links=short_links,
+                           tables=out_dict['tables']
+                        #    data=data
                            )
 
 

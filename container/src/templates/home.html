@@ -17,7 +17,7 @@
     <img src="/static/logo.png" alt="Positioned Image" class="positioned-image" style="position: absolute; right: 50px; top: 20px;">
     <h1>Primer design tool</h1>
     <h3>Get started designing primers.</h3>
-    <h3>1. Enter gene name, NCBI id for transcript and guide sequences. </h3>
+    <h3>1. Enter gene name, NCBI id for gene and guide sequences. </h3>
     <form method="POST">
         {{ forms['gene_info_form'].hidden_tag() }}
         <div>
@@ -53,11 +53,18 @@
         {{ forms['blast_info_form'].hidden_tag() }}
         <div>
             {{ forms['blast_info_form'].text_field8.label }} {{ forms['blast_info_form'].text_field8 }}
+            <label for="checkbox_all">Show all results</label>
+            <input type="checkbox" id="checkbox_all" name="checkbox_all" value="all_results">
             <h4></h4>
         </div>
         <div>
             <input type="submit" value="Submit" name="blast_info_form_submit">
         </div>
+    </form>
+    <h3>3. All possible primers</h3>
+    <form method="POST">
+        {{ tables[0]|safe }}
+        <input type="submit" value="Submit" name="checkbox_table_submit">
     </form>
  
 </body>

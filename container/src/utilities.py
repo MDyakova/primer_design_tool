@@ -232,7 +232,14 @@ def blast_primers(search_sequence,
  
     return url
 
-def blast_results(job_id, gene_nt_id, amplicon_start, amplicon_end, search_sequence, gene_name, guide_name):
+def blast_results(job_id, 
+                  gene_nt_id, 
+                  amplicon_start, 
+                  amplicon_end, 
+                  search_sequence, 
+                  gene_name, 
+                  guide_name, 
+                  return_all):
     r = requests.get('https://www.ncbi.nlm.nih.gov/tools/primer-blast/primertool.cgi?job_key=' + job_id)
     text = r.text
 
@@ -298,7 +305,10 @@ def blast_results(job_id, gene_nt_id, amplicon_start, amplicon_end, search_seque
                             np.sum(pd.DataFrame(all_results)[[10, 11]].min(axis=1)==1)])
         
     all_results_f = pd.DataFrame(all_results_f)
-    all_results_f = all_results_f[all_results_f[[3, 4, 5, 6, 7]].min(axis=1)<1]
+    if return_all == False:
+        all_results_f = all_results_f[all_results_f[[3, 4, 5, 6, 7]].min(axis=1)<1]
+    else:
+        all_results_f = all_results_f[all_results_f[[3, 4, 5, 6, 7]].min(axis=1)<=1]
 
     all_results_f.columns = ['primer_pair', 'primer_left', 'primer_right', 
                             'score_1nt', 'score_2nt',
@@ -348,6 +358,9 @@ def blast_results(job_id, gene_nt_id, amplicon_start, amplicon_end, search_seque
     all_primers = all_primers[new_columns]
     all_primers = pd.merge(all_primers, all_results_f, left_on=["Sequence (5'->3')_L", "Sequence (5'->3')_R"],
                                             right_on=['primer_left', 'primer_right'])
+    all_primers.drop(columns=['primer_left', 'primer_right'], inplace=True)
+
+    all_primers.sort_values(by=['score_1nt', 'score_2nt', 'score_3nt', 'score_4nt', 'score_5nt'], inplace=True)
 
     all_primers.to_csv('src/static/outputs/' + gene_name + '/' + gene_name + ' ' + guide_name +'_primers.csv', index=None)
 
