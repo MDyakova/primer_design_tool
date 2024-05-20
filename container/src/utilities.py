@@ -305,10 +305,10 @@ def blast_results(job_id,
                             np.sum(pd.DataFrame(all_results)[[10, 11]].min(axis=1)==1)])
         
     all_results_f = pd.DataFrame(all_results_f)
-    if return_all == False:
-        all_results_f = all_results_f[all_results_f[[3, 4, 5, 6, 7]].min(axis=1)<1]
-    else:
+    if return_all:
         all_results_f = all_results_f[all_results_f[[3, 4, 5, 6, 7]].min(axis=1)<=1]
+    else:
+        all_results_f = all_results_f[all_results_f[[3, 4, 5, 6, 7]].min(axis=1)<1]
 
     all_results_f.columns = ['primer_pair', 'primer_left', 'primer_right', 
                             'score_1nt', 'score_2nt',

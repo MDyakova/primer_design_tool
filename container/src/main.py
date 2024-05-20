@@ -40,7 +40,8 @@ out_dict = {
     "blast_id":"",
     "gene_nt_id":"",
     "tables":[],
-    "tables_df":[]
+    "tables_df":[],
+    "all_primers":[]
 
 
 }
@@ -263,45 +264,55 @@ def index(out_dict):
             tables = [html_table]
             out_dict['tables'] = tables
 
+            out_dict["all_primers"] = all_primers
+
         if "checkbox_table_submit" in request.form:
-            selected_ids = request.form.getlist('checkbox')
-            # out_dict["gene_dict"] = selected_ids
 
-            all_primers_selected = all_primers[all_primers['ID'].apply(lambda p: p in selected_ids)]
-            all_primers_selected.to_csv('src/static/outputs/' + out_dict["gene_name"]  + '/' + out_dict["guide_name"] 
-                               + ' ' + guide_name +'__selected_primers.csv', index=None)
-            
-            output_files = os.listdir('src/static/outputs/' + gene_name + '/')
+            if len(out_dict["all_primers"])==0:
+                text_error = 'Make a primer table'
+                out_dict["gene_dict"] = ("<span class='red-text'>" 
+                                         + 'Error: ' + str(text_error)
+                                         + "</span>")
+                return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links)
+            else:
+                selected_ids = request.form.getlist('checkbox')
+                # out_dict["gene_dict"] = selected_ids
 
-            file_names = ('Primers_' 
-                            + out_dict["gene_name"] 
-                            + '_' 
-                            + out_dict["guide_name"]
-                            + '_'
-                            + date_today)
-            
-            # Create a BytesIO object to store the ZIP file
-            zip_buffer = BytesIO()
-
-            # Create a ZipFile object
-            with zipfile.ZipFile(
-                zip_buffer, "a", zipfile.ZIP_DEFLATED, False
-            ) as zip_file:
+                all_primers_selected = out_dict["all_primers"][out_dict["all_primers"]['ID'].apply(lambda p: p in selected_ids)]
+                all_primers_selected.to_csv('src/static/outputs/' + out_dict["gene_name"]  + '/' + out_dict["guide_name"] 
+                                + ' '  + '__selected_primers.csv', index=None)
                 
-                for file_name in output_files:
-                    # Add the FASTA file to the ZIP file with a custom name
-                    zip_file.write('src/static/outputs/' + gene_name + '/' + file_name, 
-                                   arcname=file_name)
+                output_files = os.listdir('src/static/outputs/' + gene_name + '/')
 
-            # Move the buffer's position to the beginning to ensure all the data is read
-            zip_buffer.seek(0)
+                file_names = ('Primers_' 
+                                + out_dict["gene_name"] 
+                                + '_' 
+                                + out_dict["guide_name"]
+                                + '_'
+                                + date_today)
+                
+                # Create a BytesIO object to store the ZIP file
+                zip_buffer = BytesIO()
 
-            # Return the ZIP file as an attachment
-            return send_file(
-                zip_buffer,
-                download_name=file_names + ".zip",
-                as_attachment=True,
-            )         
+                # Create a ZipFile object
+                with zipfile.ZipFile(
+                    zip_buffer, "a", zipfile.ZIP_DEFLATED, False
+                ) as zip_file:
+                    
+                    for file_name in output_files:
+                        # Add the FASTA file to the ZIP file with a custom name
+                        zip_file.write('src/static/outputs/' + gene_name + '/' + file_name, 
+                                    arcname=file_name)
+
+                # Move the buffer's position to the beginning to ensure all the data is read
+                zip_buffer.seek(0)
+
+                # Return the ZIP file as an attachment
+                return send_file(
+                    zip_buffer,
+                    download_name=file_names + ".zip",
+                    as_attachment=True,
+                )         
 
 
 
@@ -315,6 +326,7 @@ def index(out_dict):
         gene_info_form.text_field.default = out_dict["gene_name"]
         gene_info_form.text_field2.default = out_dict["ncbi_id"]
         gene_info_form.text_field3.default = out_dict["guide_seq"]
+        gene_info_form.text_field3_2.default = out_dict["guide_name"]
         gene_info_form.text_field4.default = out_dict["min_dist"]
         gene_info_form.text_field5.default = out_dict["max_dist"]
         gene_info_form.text_field6.default = out_dict["min_size"]
@@ -341,6 +353,7 @@ def index(out_dict):
     gene_info_form.text_field.default = out_dict["gene_name"]
     gene_info_form.text_field2.default = out_dict["ncbi_id"]
     gene_info_form.text_field3.default = out_dict["guide_seq"]
+    gene_info_form.text_field3_2.default = out_dict["guide_name"]
     gene_info_form.text_field4.default = out_dict["min_dist"]
     gene_info_form.text_field5.default = out_dict["max_dist"]
     gene_info_form.text_field6.default = out_dict["min_size"]
