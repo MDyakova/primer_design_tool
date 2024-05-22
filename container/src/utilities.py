@@ -360,7 +360,7 @@ def blast_results(job_id,
                                             right_on=['primer_left', 'primer_right'])
     all_primers.drop(columns=['primer_left', 'primer_right'], inplace=True)
 
-    all_primers.sort_values(by=['score_1nt', 'score_2nt', 'score_3nt', 'score_4nt', 'score_5nt'], inplace=True)
+    all_primers.sort_values(by=['bad_count_1nt', 'bad_count_2nt', 'bad_count_3nt', 'bad_count_4nt', 'bad_count_5nt'], inplace=True)
 
     all_primers.to_csv('src/static/outputs/' + gene_name + '/' + gene_name + ' ' + guide_name +'_primers.csv', index=None)
 
@@ -471,17 +471,20 @@ def gene_bank_file(gene_name, full_sequence, date_today,
         f.write(origin + '\n')
 
 
-def find_elements(sequence, guide_seq, guide_name, selected_primers):
+def find_elements(sequence, guide_seq, guide_name, selected_primers, is_guide=True):
     """ Make lists with guide and primer positions for Snap gene file"""
 
-    start_guide = len(sequence.split(guide_seq)[0])+1
-    end_guide = start_guide + len(guide_seq)
+    if is_guide:
+        start_guide = len(sequence.split(guide_seq)[0])+1
+        end_guide = start_guide + len(guide_seq)
 
-    elements_list = [[guide_name,
-                      start_guide,
-                      end_guide,
-                      'None',
-                      "#0000EE"]]
+        elements_list = [[guide_name,
+                        start_guide,
+                        end_guide,
+                        'None',
+                        "#0000EE"]]
+    else:
+        elements_list = []
     
     oligos = []
     for name, seq in zip(selected_primers['left_name'], selected_primers["Sequence (5'->3')_L"]):

@@ -26,9 +26,18 @@
             <h4></h4>
         </div>
         <div>
-            <h4>Input two guides left and right separated by semicolons</h4>
+            <h4>Choose guide or task name</h4>
             {{ forms['gene_info_form'].text_field3_2.label }} {{ forms['gene_info_form'].text_field3_2 }}
+            <h4></h4>
+        </div>
+        <div>
+            <h4>Input two guides left and right separated by semicolons</h4>
             {{ forms['gene_info_form'].text_field3.label }} {{ forms['gene_info_form'].text_field3 }}
+            <h4></h4>
+        </div>
+        <div>
+            <h4>Or input your sequence in fasta format</h4>
+             {{ forms['gene_info_form'].text_field8 }}
             <h4></h4>
         </div>
         <div>
@@ -54,7 +63,7 @@
         <div>
             {{ forms['blast_info_form'].text_field8.label }} {{ forms['blast_info_form'].text_field8 }}
             <label for="checkbox_all">Show all results</label>
-            <input type="checkbox" id="checkbox_all" name="checkbox_all" value="all_results">
+            <input type="checkbox" id="checkbox_all" name="checkbox_all" value="all_results" {% if checked %}checked{% endif %}>
             <h4></h4>
         </div>
         <div>
