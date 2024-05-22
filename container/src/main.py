@@ -13,7 +13,7 @@ from flask import Flask, render_template, request, send_file
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField
 
-from utilities import ensemble_info, ncbi_info, guide_info, blast_primers, blast_results
+from utilities import ensemble_info, ncbi_info, guide_info, blast_primers, blast_results, gene_bank_file, find_elements, primers_pivot_table
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "mysecretkey"  # fake key to work with flask server
@@ -251,8 +251,8 @@ def index(out_dict):
             # })
 
             # Add a column for checkboxes
-            all_primers['ID'] = all_primers.index
-            all_primers['ID'] = all_primers['ID'].apply(lambda x: f'<input type="checkbox" name="checkbox" value="{x}">')
+            all_primers['ID_index'] = all_primers.index
+            all_primers['ID'] = all_primers['ID_index'].apply(lambda x: f'<input type="checkbox" name="checkbox" value="{x}">')
 
             # Reorder columns to put 'Select' first
             cols = all_primers.columns.tolist()
@@ -268,6 +268,9 @@ def index(out_dict):
 
         if "checkbox_table_submit" in request.form:
 
+            
+
+
             if len(out_dict["all_primers"])==0:
                 text_error = 'Make a primer table'
                 out_dict["gene_dict"] = ("<span class='red-text'>" 
@@ -276,20 +279,32 @@ def index(out_dict):
                 return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links)
             else:
                 selected_ids = request.form.getlist('checkbox')
-                # out_dict["gene_dict"] = selected_ids
 
-                all_primers_selected = out_dict["all_primers"][out_dict["all_primers"]['ID'].apply(lambda p: p in selected_ids)]
+                all_primers_selected = out_dict["all_primers"][out_dict["all_primers"]['ID_index'].apply(lambda p: str(p) in selected_ids)]
+                all_primers_selected.drop(columns=['ID', 'ID_index'], inplace=True)
+
                 all_primers_selected.to_csv('src/static/outputs/' + out_dict["gene_name"]  + '/' + out_dict["guide_name"] 
-                                + ' '  + '__selected_primers.csv', index=None)
+                                + '_selected_primers.csv', index=None)
                 
-                output_files = os.listdir('src/static/outputs/' + gene_name + '/')
-
                 file_names = ('Primers_' 
                                 + out_dict["gene_name"] 
                                 + '_' 
                                 + out_dict["guide_name"]
                                 + '_'
                                 + date_today)
+                
+                elements_list, oligos = find_elements(out_dict['search_sequence'], 
+                                                      out_dict["guide_full_seq"],
+                                                      out_dict["guide_name"],
+                                                      all_primers_selected)
+                
+                gene_bank_file(out_dict["gene_name"], out_dict['search_sequence'], date_today, 
+                                            elements_list, file_names, oligos=oligos)
+                
+                primers_pivot_table(all_primers_selected, out_dict["gene_name"], out_dict["guide_name"])
+                
+                output_files = os.listdir('src/static/outputs/' + out_dict["gene_name"] + '/')
+
                 
                 # Create a BytesIO object to store the ZIP file
                 zip_buffer = BytesIO()
@@ -301,13 +316,13 @@ def index(out_dict):
                     
                     for file_name in output_files:
                         # Add the FASTA file to the ZIP file with a custom name
-                        zip_file.write('src/static/outputs/' + gene_name + '/' + file_name, 
+                        zip_file.write('src/static/outputs/' + out_dict["gene_name"] + '/' + file_name, 
                                     arcname=file_name)
 
                 # Move the buffer's position to the beginning to ensure all the data is read
                 zip_buffer.seek(0)
 
-                # Return the ZIP file as an attachment
+                #Return the ZIP file as an attachment
                 return send_file(
                     zip_buffer,
                     download_name=file_names + ".zip",

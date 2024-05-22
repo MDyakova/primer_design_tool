@@ -367,3 +367,153 @@ def blast_results(job_id,
     return all_primers
 
 
+title = """LOCUS       {gene_name}        {len_full_sequence} bp DNA     linear   UNA {date_today}
+DEFINITION  {gene_name}.
+ACCESSION   .
+VERSION     .
+KEYWORDS    .
+SOURCE      synthetic DNA construct
+  ORGANISM  synthetic DNA construct
+REFERENCE   1  (bases 1 to {len_full_sequence})
+  AUTHORS   .
+  TITLE     Direct Submission
+  JOURNAL   For SnapGene Viewer
+            https://www.snapgene.com
+FEATURES             Location/Qualifiers"""
+
+feature_sourse = '''     source          1..{len_full_sequence}
+                     /mol_type="other DNA"
+                     /note="color: #ffffff"
+                     /organism="synthetic DNA construct"'''
+
+origin = '''ORIGIN
+{origin_seq}
+//'''
+
+def misc_feature_template(start, end, label, color, direction):
+    if direction == 'None':
+        misc_f = f'''     misc_feature    {start}..{end}
+                        /label={label}
+                        /note="color: {color}"'''
+    else:
+        misc_f = f'''     misc_feature    {start}..{end}
+                        /label={label}
+                        /note="color: {color}; direction: {direction}"'''
+    return misc_f
+
+def primer_template(name, seq, date_today, start, end):
+    primer_f = f'''     primer_bind     complement({start}..{end})
+                     /label={name}
+                     /note="color: black; sequence: 
+                     {seq}; added: 
+                     {date_today}"'''
+    return primer_f
+
+def gene_bank_file(gene_name, full_sequence, date_today, 
+                   elements_list, files_name, oligos = [], 
+                   title=title, feature_sourse=feature_sourse, origin=origin):
+    
+    title = title.format(gene_name=gene_name, full_sequence=full_sequence, 
+             date_today=date_today, len_full_sequence = len(full_sequence))
+    
+    feature_sourse = feature_sourse.format(len_full_sequence = len(full_sequence)) 
+    
+    all_misc_feature = ''
+    for feature in elements_list:
+        start = feature[1]
+        end = feature[2]
+        name = feature[0]
+        color = feature[4]
+        direction = feature[3]
+        if direction == '+':
+            direction = 'RIGHT'
+        elif direction == '-':
+            direction = 'LEFT'
+        else:
+            direction = 'None'
+        misc_feature = misc_feature_template(start, end, name, color, direction)
+        all_misc_feature += misc_feature + '\n'
+
+    all_primers = ''
+    for oligo in oligos:
+        start = oligo[2]
+        end = oligo[3]
+        name = oligo[0]
+        seq = oligo[1]
+
+        primer_feature = primer_template(name, seq, date_today, start, end)
+        all_primers += primer_feature + '\n'
+        
+    origin_seq = ''
+    for i in range(len(full_sequence)):
+        if i%60 == 0:
+            origin_seq += '\n' + ' '*(9 - len(str(i+1))) + str(i+1) + ' '
+        elif i%10 == 0:
+            origin_seq += ' '
+        origin_seq += full_sequence[i].lower()
+    origin_seq = origin_seq[1:]    
+    
+    origin = origin.format(origin_seq=origin_seq)
+
+    gbk_file_name = (
+        "src/static/outputs/"
+        + gene_name
+        + "/"
+        + files_name
+        + ".gbk"
+    )
+
+    with open(gbk_file_name, "w", encoding="utf-8") as f:
+        f.write(title + '\n')
+        f.write(feature_sourse + '\n')
+        f.write(all_misc_feature)
+        f.write(all_primers)
+        f.write(origin + '\n')
+
+
+def find_elements(sequence, guide_seq, guide_name, selected_primers):
+    """ Make lists with guide and primer positions for Snap gene file"""
+
+    start_guide = len(sequence.split(guide_seq)[0])+1
+    end_guide = start_guide + len(guide_seq)
+
+    elements_list = [[guide_name,
+                      start_guide,
+                      end_guide,
+                      'None',
+                      "#0000EE"]]
+    
+    oligos = []
+    for name, seq in zip(selected_primers['left_name'], selected_primers["Sequence (5'->3')_L"]):
+        start_primer = len(sequence.split(seq)[0])+1
+        end_primer= start_primer + len(seq)
+        # oligos.append([name, seq, start_primer, end_primer])
+        oligos.append([name, seq, 1, len(seq)])
+    for name, seq in zip(selected_primers['right_name'], selected_primers["Sequence (5'->3')_R"]):
+        start_primer = len(sequence.split(seq)[0])+1
+        end_primer= start_primer + len(seq)
+        # oligos.append([name, seq, start_primer, end_primer])
+        oligos.append([name, seq, 1, len(seq)])
+
+    return elements_list, oligos
+
+def primers_pivot_table(selected_primers, gene_name, guide_name):
+    
+    compl_dict = {'A':'T', 'T':'A', 'G':'C', 'C':'G'}
+
+    all_primers_dist = []
+
+    for name_l, dist_l in zip(selected_primers['left_name'], 
+                             selected_primers['cut_site_dist_L']):
+        for name_r, dist_r in zip(selected_primers['right_name'], 
+                                 selected_primers['cut_site_dist_R']):
+
+            all_primers_dist.append([guide_name, name_l, name_r, '/'.join([str(dist_l), str(dist_r)])]) 
+
+    all_primers_dist = pd.DataFrame(all_primers_dist, columns=('guide_name', 'primer_L', 'primer_R', 'dist'))
+    all_primers_dist = all_primers_dist.pivot_table('dist', index=['primer_L', 'primer_R'], columns=['guide_name'], aggfunc='max')
+    all_primers_dist.to_csv('src/static/outputs/' + gene_name + '/' + guide_name + '_distances.csv')
+
+
+
+
