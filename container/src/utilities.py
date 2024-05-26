@@ -476,7 +476,7 @@ def find_elements(sequence, guide_seq, guide_name, selected_primers, is_guide=Tr
 
     if is_guide:
         start_guide = len(sequence.split(guide_seq)[0])+1
-        end_guide = start_guide + len(guide_seq)
+        end_guide = start_guide + len(guide_seq) - 1
 
         elements_list = [[guide_name,
                         start_guide,
@@ -500,7 +500,15 @@ def find_elements(sequence, guide_seq, guide_name, selected_primers, is_guide=Tr
 
     return elements_list, oligos
 
-def primers_pivot_table(selected_primers, gene_name, guide_name):
+def primers_pivot_table(selected_primers, 
+                        gene_name, 
+                        guide_name, 
+                        guide_full_seq,
+                        min_dist, 
+                        max_dist, 
+                        min_size, 
+                        max_size, 
+                        insert_seq):
     
     compl_dict = {'A':'T', 'T':'A', 'G':'C', 'C':'G'}
 
@@ -511,7 +519,19 @@ def primers_pivot_table(selected_primers, gene_name, guide_name):
         for name_r, dist_r in zip(selected_primers['right_name'], 
                                  selected_primers['cut_site_dist_R']):
 
-            all_primers_dist.append([guide_name, name_l, name_r, '/'.join([str(dist_l), str(dist_r)])]) 
+            if insert_seq!='':
+                if ((dist_l>=min_dist) & (dist_l<=max_dist) 
+                    & (dist_r>=min_dist) & (dist_r<=max_dist)
+                    & ((dist_l+dist_r)>=min_size) & ((dist_l+dist_r)<=max_size)):
+                    all_primers_dist.append([guide_name, name_l, name_r, dist_l+dist_r]) 
+            elif guide_full_seq!='':
+                if ((dist_l>=min_dist) & (dist_l<=max_dist) 
+                    & (dist_r>=min_dist) & (dist_r<=max_dist)
+                    & ((dist_l+dist_r)>=min_size) & ((dist_l+dist_r)<=max_size)):
+                    all_primers_dist.append([guide_name, name_l, name_r, dist_l+dist_r]) 
+            else:
+                if (((dist_l+dist_r)>=min_size) & ((dist_l+dist_r)<=max_size)):
+                    all_primers_dist.append([guide_name, name_l, name_r, dist_l+dist_r]) 
 
     all_primers_dist = pd.DataFrame(all_primers_dist, columns=('guide_name', 'primer_L', 'primer_R', 'dist'))
     all_primers_dist = all_primers_dist.pivot_table('dist', index=['primer_L', 'primer_R'], columns=['guide_name'], aggfunc='max')

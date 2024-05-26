@@ -130,6 +130,22 @@ def index(out_dict):
             min_size= gene_info_form.text_field6.data
             max_size = gene_info_form.text_field7.data
 
+            out_dict["guide_seq"] = guide_seq
+            out_dict["guide_name"] = guide_name
+
+            try:
+                out_dict["min_dist"] = int(min_dist)
+                out_dict["max_dist"] = int(max_dist)
+                out_dict["min_size"] = int(min_size)
+                out_dict["max_size"] = int(max_size)
+            except Exception as e:
+                text_error = 'primer position parameters must be > 0'
+                out_dict["gene_dict"] = ("<span class='red-text'>" 
+                                        + 'Error: ' + str(text_error)
+                                        + "</span>")
+                return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links,
+                                       tables=[], checked=False)
+
             # Insert sequence
             insert_seq = gene_info_form.text_field8.data
             out_dict['insert_seq'] = insert_seq
@@ -142,10 +158,53 @@ def index(out_dict):
                     out_dict["gene_name"] = gene_name
                     insert_seq = ''.join(insert_seq.split('\n')[1:])
                 insert_seq = insert_seq.replace('\n', '').replace('\r', '').replace(' ', '').strip()
-                primer5_start = ''
-                primer5_end = ''
-                primer3_start = ''
-                primer3_end = ''
+                out_dict['insert_seq'] = insert_seq
+
+                if guide_seq=='':
+                    primer5_start = ''
+                    primer5_end = ''
+                    primer3_start = ''
+                    primer3_end = ''
+                else:
+                    out_dict["strand"] = '+'
+                    # cut_size = len(insert_seq.split(guide_seq)[0]) + len(guide_seq)//2
+                    # primer5_start = 1
+                    # primer5_end = cut_size - out_dict["min_dist"]
+                    # primer3_start = cut_size + out_dict["min_dist"]
+                    # primer3_end = len(insert_seq)
+
+                    # out_dict['full_guide_seq'] = guide_seq
+
+                    try:
+                        guide_full_seq = guide_info(
+                                                    out_dict["guide_seq"], out_dict["strand"], 
+                                                    out_dict['insert_seq']
+                        )
+
+                        out_dict["guide_full_seq"] = guide_full_seq
+
+                        left_flank = out_dict['insert_seq'].split(out_dict["guide_full_seq"])[0][-out_dict["max_dist"]:]
+                        right_flank = out_dict['insert_seq'].split(out_dict["guide_full_seq"])[1][:out_dict["max_dist"]]
+
+                        search_sequence = left_flank + out_dict["guide_full_seq"] + right_flank
+                        out_dict['search_sequence'] = search_sequence
+                        # cut_size = len(search_sequence)//2
+                        cut_size = len(search_sequence.split(out_dict["guide_full_seq"])[0]) + len(out_dict["guide_full_seq"])//2
+
+                        primer5_start = 1
+                        primer5_end = cut_size - out_dict["min_dist"]
+                        primer3_start = cut_size + out_dict["min_dist"]
+                        primer3_end = len(search_sequence)
+
+                    except Exception as e:
+                        text_error = 'check guide sequence'
+                        out_dict["gene_dict"] = ("<span class='red-text'>" 
+                                                + 'Error: ' + str(text_error)
+                                                + "</span>")
+                        return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links,
+                                               tables=[], checked=False)
+
+
                 out_dict['amplicon_start'] = -1
                 out_dict['amplicon_end'] = -1
                 out_dict['gene_nt_id'] = ''
@@ -158,7 +217,12 @@ def index(out_dict):
 
                 # Create output directory
                 output_directory = "src/static/outputs/" + gene_name
+                try:
+                    shutil.rmtree(output_directory)
+                except:
+                    pass
                 os.makedirs(output_directory, exist_ok=True)
+
 
             if insert_seq == '':
                 if (gene_name == '') | (ncbi_id == '') | (guide_seq == ''):
@@ -166,7 +230,8 @@ def index(out_dict):
                     out_dict["gene_dict"] = ("<span class='red-text'>" 
                                             + 'Error: ' + str(text_error)
                                             + "</span>")
-                    return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links)
+                    return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links,
+                                           tables=[], checked=False)
                 
                 out_dict["gene_name"] = gene_name
                 out_dict["ncbi_id"] = ncbi_id
@@ -175,19 +240,23 @@ def index(out_dict):
 
                 # Create output directory
                 output_directory = "src/static/outputs/" + gene_name
+                try:
+                    shutil.rmtree(output_directory)
+                except:
+                    pass
                 os.makedirs(output_directory, exist_ok=True)
                 
-                try:
-                    out_dict["min_dist"] = int(min_dist)
-                    out_dict["max_dist"] = int(max_dist)
-                    out_dict["min_size"] = int(min_size)
-                    out_dict["max_size"] = int(max_size)
-                except Exception as e:
-                    text_error = 'primer position parameters must be > 0'
-                    out_dict["gene_dict"] = ("<span class='red-text'>" 
-                                            + 'Error: ' + str(text_error)
-                                            + "</span>")
-                    return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links)
+                # try:
+                #     out_dict["min_dist"] = int(min_dist)
+                #     out_dict["max_dist"] = int(max_dist)
+                #     out_dict["min_size"] = int(min_size)
+                #     out_dict["max_size"] = int(max_size)
+                # except Exception as e:
+                #     text_error = 'primer position parameters must be > 0'
+                #     out_dict["gene_dict"] = ("<span class='red-text'>" 
+                #                             + 'Error: ' + str(text_error)
+                #                             + "</span>")
+                #     return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links)
                 
                 try:
                     ensemble_gene_seq, gene_dict, strand = ensemble_info(gene_name)
@@ -199,7 +268,8 @@ def index(out_dict):
                     out_dict["gene_dict"] = ("<span class='red-text'>" 
                                             + 'Error: ' + str(text_error)
                                             + "</span>")
-                    return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links)
+                    return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links,
+                                           tables=[], checked=False)
                 
                 try:
                     guide_full_seq = guide_info(
@@ -214,7 +284,8 @@ def index(out_dict):
 
                     search_sequence = left_flank + out_dict["guide_full_seq"] + right_flank
                     out_dict['search_sequence'] = search_sequence
-                    cut_size = len(search_sequence)//2
+                    # cut_size = len(search_sequence)//2
+                    cut_size = len(search_sequence.split(out_dict["guide_full_seq"])[0]) + len(out_dict["guide_full_seq"])//2
 
                     primer5_start = 1
                     primer5_end = cut_size - out_dict["min_dist"]
@@ -226,7 +297,8 @@ def index(out_dict):
                     out_dict["gene_dict"] = ("<span class='red-text'>" 
                                             + 'Error: ' + str(text_error)
                                             + "</span>")
-                    return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links)
+                    return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links,
+                                           tables=[], checked=False)
                 
                 try:
                     amplicon_start, amplicon_end, gene_nt_id = ncbi_info(out_dict["ncbi_id"], 
@@ -240,7 +312,8 @@ def index(out_dict):
                     out_dict["gene_dict"] = ("<span class='red-text'>" 
                                             + 'Error: ' + str(text_error)
                                             + "</span>")
-                    return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links)
+                    return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links,
+                                           tables=[], checked=False)
             
             blast_url = blast_primers(out_dict['search_sequence'] , 
                                         primer5_start, 
@@ -313,7 +386,8 @@ def index(out_dict):
                 out_dict["gene_dict"] = ("<span class='red-text'>" 
                                          + 'Error: ' + str(text_error)
                                          + "</span>")
-                return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links)
+                return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links,
+                                       tables=[], checked=False)
             else:
                 selected_ids = request.form.getlist('checkbox')
 
@@ -330,7 +404,7 @@ def index(out_dict):
                                 + '_'
                                 + date_today)
                 
-                if out_dict['insert_seq']!='':
+                if (out_dict['insert_seq']!='') & (out_dict['guide_seq']==''):
                     elements_list, oligos = find_elements(out_dict['search_sequence'], 
                                                         out_dict["guide_full_seq"],
                                                         out_dict["guide_name"],
@@ -346,7 +420,10 @@ def index(out_dict):
                 gene_bank_file(out_dict["gene_name"], out_dict['search_sequence'], date_today, 
                                             elements_list, file_names, oligos=oligos)
                 
-                primers_pivot_table(all_primers_selected, out_dict["gene_name"], out_dict["guide_name"])
+                primers_pivot_table(all_primers_selected, out_dict["gene_name"], out_dict["guide_name"], 
+                                    out_dict['guide_full_seq'],
+                                    out_dict["min_dist"], out_dict["max_dist"], out_dict["min_size"], out_dict["max_size"],
+                                    out_dict['insert_seq'])
                 
                 output_files = os.listdir('src/static/outputs/' + out_dict["gene_name"] + '/')
 
