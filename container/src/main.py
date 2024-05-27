@@ -42,7 +42,12 @@ out_dict = {
     "tables":[],
     "tables_df":[],
     "all_primers":[],
-    "insert_seq":''
+    "insert_seq":'',
+    "amplicon_start":'',
+    "amplicon_end":'',
+    "gene_nt_id":''
+
+
 
 
 }
@@ -108,7 +113,7 @@ def index(out_dict):
 
     short_links = {'Blast': out_dict['blast_url']}
 
-    out_dict["error_message"] = ''
+    # out_dict["error_message"] = ''
 
     # Show all primers
     checkbox_all_cond = False
@@ -165,6 +170,8 @@ def index(out_dict):
                     primer5_end = ''
                     primer3_start = ''
                     primer3_end = ''
+                    out_dict['search_sequence'] = insert_seq
+
                 else:
                     out_dict["strand"] = '+'
                     # cut_size = len(insert_seq.split(guide_seq)[0]) + len(guide_seq)//2
@@ -209,7 +216,7 @@ def index(out_dict):
                 out_dict['amplicon_end'] = -1
                 out_dict['gene_nt_id'] = ''
 
-                out_dict['search_sequence'] = insert_seq
+                # out_dict['search_sequence'] = insert_seq
 
                 out_dict["guide_name"] = guide_name
 
@@ -449,7 +456,13 @@ def index(out_dict):
                     zip_buffer,
                     download_name=file_names + ".zip",
                     as_attachment=True,
-                )         
+                ) 
+        if "clear_forms_submit" in request.form:
+            for key in out_dict.keys():
+                if key in out_dict_start.keys():
+                    out_dict[key] = out_dict_start[key] 
+                else:
+                    out_dict[key] = ''
 
 
 

@@ -93,18 +93,23 @@ def guide_info(guide_seq, strand, ensemble_gene_seq):
     compl_dict = {"A": "T", "T": "A", "G": "C", "C": "G"}
 
     if ';' not in guide_seq:
-        right_guide = guide_seq[-20:]
-        left_guide = ''.join([compl_dict[i] for i in guide_seq[:20]][::-1])
-        guide_seq = ';'.join([left_guide, right_guide])
+        if len(guide_seq)>23:
+            right_guide = guide_seq[-20:]
+            left_guide = ''.join([compl_dict[i] for i in guide_seq[:20]][::-1])
+            guide_seq = ';'.join([left_guide, right_guide])
 
-        right_guide_save = right_guide
-        left_guide_save = left_guide
+        # right_guide_save = right_guide
+        # left_guide_save = left_guide
 
     if ';' not in guide_seq:
-        if strand == '-':
+        if guide_seq not in ensemble_gene_seq:
             guide = ''.join([compl_dict[i] for i in guide_seq][::-1])
         else:
             guide = guide_seq
+        # if strand == '-':
+        #     guide = ''.join([compl_dict[i] for i in guide_seq][::-1])
+        # else:
+        #     guide = guide_seq
     else:
         left_guide, right_guide = guide_seq.split(';')
         left_guide = left_guide.strip()
