@@ -524,7 +524,7 @@ def primers_pivot_table(selected_primers,
         for name_r, dist_r in zip(selected_primers['right_name'], 
                                  selected_primers['cut_site_dist_R']):
 
-            if insert_seq!='':
+            if insert_seq=='':
                 if ((dist_l>=min_dist) & (dist_l<=max_dist) 
                     & (dist_r>=min_dist) & (dist_r<=max_dist)
                     & ((dist_l+dist_r)>=min_size) & ((dist_l+dist_r)<=max_size)):
