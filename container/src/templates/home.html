@@ -61,7 +61,7 @@
     <form method="POST">
         {{ forms['blast_info_form'].hidden_tag() }}
         <div>
-            {{ forms['blast_info_form'].text_field8.label }} {{ forms['blast_info_form'].text_field8 }}
+            {{ forms['blast_info_form'].text_field9.label }} {{ forms['blast_info_form'].text_field9 }}
             <label for="checkbox_all">Show all results</label>
             <input type="checkbox" id="checkbox_all" name="checkbox_all" value="all_results" {% if checked %}checked{% endif %}>
             <h4></h4>
@@ -83,7 +83,7 @@
     </form>
 
     <h3>5. Primer distances for few guides </h3>
-    <h4>You can get pivot table with ditances to cut sites for few guides. </h4>
+    <h4>You can get pivot table with distances to cut sites for few guides. </h4>
     <h4>Make a single table with all selected primers for all guides.</h4>
     <h4>Upload this table:</h4>
     <form method="post" enctype="multipart/form-data"> 

@@ -7,6 +7,7 @@ from Bio.pairwise2 import format_alignment
 from pyensembl import EnsemblRelease
 import requests
 import urllib.request
+import os
 
 from Bio import Entrez
 from Bio import SeqIO
@@ -367,7 +368,8 @@ def blast_results(job_id,
 
     all_primers.sort_values(by=['bad_count_1nt', 'bad_count_2nt', 'bad_count_3nt', 'bad_count_4nt', 'bad_count_5nt'], inplace=True)
 
-    all_primers.to_csv('src/static/outputs/' + gene_name + '/' + gene_name + ' ' + guide_name +'_primers.csv', index=None)
+    files_path = os.path.join('src', 'static', 'outputs', gene_name, gene_name + ' ' + guide_name +'_primers.csv')
+    all_primers.to_csv(files_path, index=None)
 
     return all_primers
 
@@ -460,13 +462,14 @@ def gene_bank_file(gene_name, full_sequence, date_today,
     
     origin = origin.format(origin_seq=origin_seq)
 
-    gbk_file_name = (
-        "src/static/outputs/"
-        + gene_name
-        + "/"
-        + files_name
-        + ".gbk"
-    )
+    gbk_file_name = os.path.join('src', 'static', 'outputs', gene_name, files_name + ".gbk")
+    # gbk_file_name = (
+    #     "src/static/outputs/"
+    #     + gene_name
+    #     + "/"
+    #     + files_name
+    #     + ".gbk"
+    # )
 
     with open(gbk_file_name, "w", encoding="utf-8") as f:
         f.write(title + '\n')
@@ -540,7 +543,9 @@ def primers_pivot_table(selected_primers,
 
     all_primers_dist = pd.DataFrame(all_primers_dist, columns=('guide_name', 'primer_L', 'primer_R', 'dist'))
     all_primers_dist = all_primers_dist.pivot_table('dist', index=['primer_L', 'primer_R'], columns=['guide_name'], aggfunc='max')
-    all_primers_dist.to_csv('src/static/outputs/' + gene_name + '/' + guide_name + '_distances.csv')
+
+    file_path = os.path.join('src', 'static', 'outputs', gene_name, guide_name + '_distances.csv')
+    all_primers_dist.to_csv(file_path)
 
 def primers_pivot_table_few_guides(primers_table, min_dist, max_dist, min_size, max_size, save_name):
     
@@ -572,7 +577,8 @@ def primers_pivot_table_few_guides(primers_table, min_dist, max_dist, min_size, 
     all_primers_dist = pd.merge(all_primers_dist, all_primers_ampl[['primer_L', 'primer_R', 'amplicon_size']], 
                                 on=['primer_L', 'primer_R'])
 
-    all_primers_dist.to_csv('src/static/outputs/' + save_name  + '_distances.csv', index=False)
+    file_path = os.path.join('src', 'static', 'outputs', save_name  + '_distances.csv')
+    all_primers_dist.to_csv(file_path, index=False)
 
 def primers_coords(ensemble_gene_seq, selected_primers):
     '''Find primers coordinates in gene sequence'''

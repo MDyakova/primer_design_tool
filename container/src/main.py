@@ -233,7 +233,8 @@ def index(out_dict):
                 checkbox_all_cond = True
 
                 # Create output directory
-                output_directory = "src/static/outputs/" + gene_name
+                # output_directory = "src/static/outputs/" + gene_name
+                output_directory = os.path.join('src', 'static', 'outputs', gene_name)
                 try:
                     shutil.rmtree(output_directory)
                 except:
@@ -256,7 +257,9 @@ def index(out_dict):
                 out_dict["guide_name"] = guide_name
 
                 # Create output directory
-                output_directory = "src/static/outputs/" + gene_name
+                # output_directory = "src/static/outputs/" + gene_name
+                output_directory = os.path.join('src', 'static', 'outputs', gene_name)
+                
                 try:
                     shutil.rmtree(output_directory)
                 except:
@@ -430,8 +433,13 @@ def index(out_dict):
                                     + len(out_dict["guide_full_seq"])//2 + 1)
                     all_primers_selected['cut_site_coords'] = cut_site_coords
 
-                all_primers_selected.to_csv('src/static/outputs/' + out_dict["gene_name"]  + '/' + out_dict["guide_name"] 
-                                + '_selected_primers.csv', index=None)
+                file_path = output_directory = os.path.join('src', 'static', 'outputs', 
+                                                            out_dict["gene_name"], 
+                                                            out_dict["guide_name"] + '_selected_primers.csv')
+                # all_primers_selected.to_csv('src/static/outputs/' + out_dict["gene_name"]  + '/' + out_dict["guide_name"] 
+                #                 + '_selected_primers.csv', index=None)
+                all_primers_selected.to_csv(file_path, index=None)
+                
                 
                 file_names = ('Primers_' 
                                 + out_dict["gene_name"] 
@@ -461,7 +469,9 @@ def index(out_dict):
                                     out_dict["min_dist"], out_dict["max_dist"], out_dict["min_size"], out_dict["max_size"],
                                     out_dict['insert_seq'])
                 
-                output_files = os.listdir('src/static/outputs/' + out_dict["gene_name"] + '/')
+                # output_files = os.listdir('src/static/outputs/' + out_dict["gene_name"] + '/')
+                files_path = os.path.join('src', 'static', 'outputs', out_dict["gene_name"])
+                output_files = os.listdir(files_path)
 
                 
                 # Create a BytesIO object to store the ZIP file
@@ -474,8 +484,10 @@ def index(out_dict):
                     
                     for file_name in output_files:
                         # Add the FASTA file to the ZIP file with a custom name
-                        zip_file.write('src/static/outputs/' + out_dict["gene_name"] + '/' + file_name, 
-                                    arcname=file_name)
+                        file_path = os.path.join('src', 'static', 'outputs', out_dict["gene_name"], file_name)
+                        # zip_file.write('src/static/outputs/' + out_dict["gene_name"] + '/' + file_name, 
+                        #             arcname=file_name)
+                        zip_file.write(file_path, arcname=file_name)
 
                 # Move the buffer's position to the beginning to ensure all the data is read
                 zip_buffer.seek(0)
@@ -538,8 +550,10 @@ def index(out_dict):
             with zipfile.ZipFile(
                 zip_buffer, "a", zipfile.ZIP_DEFLATED, False
             ) as zip_file:
-                zip_file.write('src/static/outputs/' + save_name  + '_distances.csv', 
-                            arcname=save_name  + '_distances.csv')
+                file_path = os.path.join('src', 'static', 'outputs', save_name  + '_distances.csv')
+                # zip_file.write('src/static/outputs/' + save_name  + '_distances.csv', 
+                #             arcname=save_name  + '_distances.csv')
+                zip_file.write(file_path, arcname=save_name  + '_distances.csv')
 
             # Move the buffer's position to the beginning to ensure all the data is read
             zip_buffer.seek(0)
