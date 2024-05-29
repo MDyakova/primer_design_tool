@@ -81,6 +81,26 @@
         <input type="submit" value="Clear forms" name="clear_forms_submit">
         </div>
     </form>
+
+    <h3>5. Primer distances for few guides </h3>
+    <h4>You can get pivot table with ditances to cut sites for few guides. </h4>
+    <h4>Make a single table with all selected primers for all guides.</h4>
+    <h4>Upload this table:</h4>
+    <form method="post" enctype="multipart/form-data"> 
+        <!-- <label for="file">or choose your fasta file</label> -->
+        <div>
+            <input type="file" name="file" accept=".csv, .xlsx" class="open_file">
+            <input type="submit" value="Upload" name="file_upload_submit">
+        </div>
+        <!-- <div>
+            <label for="checkbox2">In frame</label>
+            <input type="checkbox" id="checkbox2" name="checkbox2" value="in_frame">
+            <label for="checkbox3">Reverse</label>
+            <input type="checkbox" id="checkbox3" name="checkbox3" value="reverse">
+        </div> -->
+    </form>
+    <!-- {{ tables[1]|safe }} -->
+
  
 </body>
 </html>

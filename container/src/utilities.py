@@ -542,6 +542,60 @@ def primers_pivot_table(selected_primers,
     all_primers_dist = all_primers_dist.pivot_table('dist', index=['primer_L', 'primer_R'], columns=['guide_name'], aggfunc='max')
     all_primers_dist.to_csv('src/static/outputs/' + gene_name + '/' + guide_name + '_distances.csv')
 
+def primers_pivot_table_few_guides(primers_table, min_dist, max_dist, min_size, max_size, save_name):
+    
+    compl_dict = {'A':'T', 'T':'A', 'G':'C', 'C':'G'}
+
+    all_primers_dist = []
+    all_primers_ampl = []
+
+    for guide_name in pd.unique(primers_table['guide_name']):
+        cut_site = np.max(primers_table[primers_table['guide_name']==guide_name]['cut_site_coords'])
+        for name_l, coord_l in zip(primers_table['left_name'], 
+                                primers_table['coords_left']):
+            for name_r, coord_r in zip(primers_table['right_name'], 
+                                    primers_table['coords_right']):
+                dist_l = int(cut_site - coord_l)
+                dist_r = int(coord_r - cut_site)
+                if ((dist_l>=min_dist) & (dist_l<=max_dist) 
+                    & (dist_r>=min_dist) & (dist_r<=max_dist)
+                    & ((dist_l+dist_r)>=min_size) & ((dist_l+dist_r)<=max_size)):
+                    all_primers_dist.append([guide_name, name_l, name_r, '/'.join([str(dist_l),str(dist_r)])]) 
+                    all_primers_ampl.append([guide_name, name_l, name_r, dist_l + dist_r]) 
+
+    all_primers_dist = pd.DataFrame(all_primers_dist, columns=('guide_name', 'primer_L', 'primer_R', 'dist'))
+    all_primers_dist = all_primers_dist.pivot_table('dist', index=['primer_L', 'primer_R'], columns=['guide_name'], aggfunc='max')
+
+    all_primers_ampl = pd.DataFrame(all_primers_ampl, columns=('guide_name', 'primer_L', 'primer_R', 'amplicon_size'))
+    all_primers_ampl = all_primers_ampl.groupby(by=['primer_L', 'primer_R'], as_index=False).max()
+
+    all_primers_dist = pd.merge(all_primers_dist, all_primers_ampl[['primer_L', 'primer_R', 'amplicon_size']], 
+                                on=['primer_L', 'primer_R'])
+
+    all_primers_dist.to_csv('src/static/outputs/' + save_name  + '_distances.csv', index=False)
+
+def primers_coords(ensemble_gene_seq, selected_primers):
+    '''Find primers coordinates in gene sequence'''
+
+    compl_dict = {"A": "T", "T": "A", "G": "C", "C": "G"}
+
+    oligos_left = []
+    for name, seq in zip(selected_primers['left_name'], selected_primers["Sequence (5'->3')_L"]):
+        start_primer = len(ensemble_gene_seq.split(seq)[0])+1
+        oligos_left.append([name, seq, start_primer])
+
+    oligos_right = []
+    for name, seq in zip(selected_primers['right_name'], selected_primers["Sequence (5'->3')_R"]):
+        seq_rev = ''.join([compl_dict[n] for n in seq][::-1])
+        start_primer = len(ensemble_gene_seq.split(seq_rev)[0])+1
+        end_primer= start_primer + len(seq_rev)
+        oligos_right.append([name, seq, end_primer])
+
+    oligos_left = pd.DataFrame(oligos_left, columns=("left_name", "Sequence (5'->3')_L", "coords_left"))
+    oligos_right = pd.DataFrame(oligos_right, columns=("right_name", "Sequence (5'->3')_R", "coords_right"))
+
+    return oligos_left, oligos_right
+
 
 
 
