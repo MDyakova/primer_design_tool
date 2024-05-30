@@ -3,23 +3,19 @@
 import os
 import numpy as np
 import pandas as pd
-# import primer3
 from primer3.bindings import calcHeterodimer
-# from Bio import pairwise2
-# from Bio.pairwise2 import format_alignment
 from pyensembl import EnsemblRelease
 import requests
-# import urllib.request
-
-
 from Bio import Entrez, SeqIO
-# from Bio import SeqIO
-
 
 def ensemble_info(gene_name):
     """
-    Get information from ensemble database.
-    Release 109 uses human reference genome GRCh38
+    Get information from ensemble database:
+    1. Gene sequence.
+    2. Gene position on chromosome.
+    3. Strand.
+    4. Additional information.
+    Release 109 uses human reference genome GRCh38.
     """
 
     data = EnsemblRelease(109)
@@ -61,7 +57,11 @@ def ensemble_info(gene_name):
 
 
 def ncbi_info(ncbi_id, strand, search_sequence):
-    """Find guide coordinates and ncbi id"""
+    """
+    Find seqrch sequence coordinates and ncbi id.
+    This data is used to looking for off-targets of primers
+    in function blast_results.    
+    """
 
     Entrez.email = "Your.Name.Here@example.org"
     handle = Entrez.efetch(db="gene", id=ncbi_id, rettype="gb", retmode="text")
@@ -112,7 +112,11 @@ def ncbi_info(ncbi_id, strand, search_sequence):
 
 def guide_info(guide_seq, ensemble_gene_seq):
     """
-    Search guide position
+    Search guide position in ensemble sequence.
+    If we have two guides (TGEE) it should be separated by ;.
+    If we have one guide (Cas9) it is single sequence.
+    Output is sequence between two guides (included guides sequences) 
+    on one strand.
     """
 
     compl_dict = {"A": "T", "T": "A", "G": "C", "C": "G"}
@@ -122,26 +126,15 @@ def guide_info(guide_seq, ensemble_gene_seq):
             right_guide = guide_seq[-20:]
             left_guide = "".join([compl_dict[i] for i in guide_seq[:20]][::-1])
             guide_seq = ";".join([left_guide, right_guide])
-
-        # right_guide_save = right_guide
-        # left_guide_save = left_guide
-
     if ";" not in guide_seq:
         if guide_seq not in ensemble_gene_seq:
             guide = "".join([compl_dict[i] for i in guide_seq][::-1])
         else:
             guide = guide_seq
-        # if strand == '-':
-        #     guide = ''.join([compl_dict[i] for i in guide_seq][::-1])
-        # else:
-        #     guide = guide_seq
     else:
         left_guide, right_guide = guide_seq.split(";")
         left_guide = left_guide.strip()
         right_guide = right_guide.strip()
-
-        # right_guide_save = right_guide
-        # left_guide_save = left_guide
 
         if left_guide not in ensemble_gene_seq:
             left_guide = "".join([compl_dict[i] for i in left_guide][::-1])
@@ -176,9 +169,12 @@ def blast_primers(
     product_size_min,
     product_size_max,
 ):
-    """Make a lint to Blast Primers site with nessesary parameters"""
+    """
+    Make a lint to Blast Primers site with nessesary parameters.
+    1. search_sequence - sequence where we find primers.
+    2. primer5_start, primer5_end, primer3_start, primer3_end - possible coordinates for primers in search sequence.
+    """
 
-    # url = f'https://www.ncbi.nlm.nih.gov/tools/primer-blast/index.cgi?LINK_LOC=bookmark&INPUT_SEQUENCE={search_sequence}&PRIMER5_START={primer5_start}&PRIMER5_END={primer5_end}&PRIMER3_START={primer3_start}&PRIMER3_END={primer3_end}&OVERLAP_5END=7&OVERLAP_3END=4&PRIMER_PRODUCT_MIN={product_size_min}&PRIMER_PRODUCT_MAX={product_size_max}&PRIMER_NUM_RETURN=1000&PRIMER_MIN_TM=57.0&PRIMER_OPT_TM=60.0&PRIMER_MAX_TM=63.0&PRIMER_MAX_DIFF_TM=2&PRIMER_ON_SPLICE_SITE=0&SEARCHMODE=0&SPLICE_SITE_OVERLAP_5END=7&SPLICE_SITE_OVERLAP_3END=4&SPLICE_SITE_OVERLAP_3END_MAX=8&SPAN_INTRON=off&MIN_INTRON_SIZE=1000&MAX_INTRON_SIZE=1000000&SEARCH_SPECIFIC_PRIMER=on&EXCLUDE_ENV=on&EXCLUDE_XM=on&TH_OLOGO_ALIGNMENT=off&TH_TEMPLATE_ALIGNMENT=off&ORGANISM=Homo%20sapiens&PRIMER_SPECIFICITY_DATABASE=refseq_representative_genomes&TOTAL_PRIMER_SPECIFICITY_MISMATCH=1&PRIMER_3END_SPECIFICITY_MISMATCH=1&MISMATCH_REGION_LENGTH=5&TOTAL_MISMATCH_IGNORE=6&MAX_TARGET_SIZE=4000&ALLOW_TRANSCRIPT_VARIANTS=off&HITSIZE=50000&EVALUE=30000&WORD_SIZE=7&MAX_CANDIDATE_PRIMER=500&PRIMER_MIN_SIZE=18&PRIMER_OPT_SIZE=20&PRIMER_MAX_SIZE=25&PRIMER_MIN_GC=20.0&PRIMER_MAX_GC=80.0&GC_CLAMP=0&NUM_TARGETS_WITH_PRIMERS=1000&NUM_TARGETS=20&MAX_TARGET_PER_TEMPLATE=100&POLYX=3&SELF_ANY=8.00&SELF_END=3.00&PRIMER_MAX_END_STABILITY=9&PRIMER_MAX_END_GC=5&PRIMER_MAX_TEMPLATE_MISPRIMING_TH=40.00&PRIMER_PAIR_MAX_TEMPLATE_MISPRIMING_TH=70.00&PRIMER_MAX_SELF_ANY_TH=45.0&PRIMER_MAX_SELF_END_TH=35.0&PRIMER_PAIR_MAX_COMPL_ANY_TH=45.0&PRIMER_PAIR_MAX_COMPL_END_TH=35.0&PRIMER_MAX_HAIRPIN_TH=24.0&PRIMER_MAX_TEMPLATE_MISPRIMING=12.00&PRIMER_PAIR_MAX_TEMPLATE_MISPRIMING=24.00&PRIMER_PAIR_MAX_COMPL_ANY=8.00&PRIMER_PAIR_MAX_COMPL_END=3.00&PRIMER_MISPRIMING_LIBRARY=repeat/repeat_9606&NO_SNP=on&LOW_COMPLEXITY_FILTER=on&MONO_CATIONS=50.0&DIVA_CATIONS=1.5&CON_ANEAL_OLIGO=300.0&CON_DNTPS=0.6&SALT_FORMULAR=1&TM_METHOD=1&PRIMER_INTERNAL_OLIGO_MIN_SIZE=18&PRIMER_INTERNAL_OLIGO_OPT_SIZE=20&PRIMER_INTERNAL_OLIGO_MAX_SIZE=27&PRIMER_INTERNAL_OLIGO_MIN_TM=57.0&PRIMER_INTERNAL_OLIGO_OPT_TM=60.0&PRIMER_INTERNAL_OLIGO_MAX_TM=63.0&PRIMER_INTERNAL_OLIGO_MAX_GC=80.0&PRIMER_INTERNAL_OLIGO_OPT_GC_PERCENT=50&PRIMER_INTERNAL_OLIGO_MIN_GC=20.0&PICK_HYB_PROBE=off&NEWWIN=on&NEWWIN=on&SHOW_SVIEWER=true'
     url = (
         f"https://www.ncbi.nlm.nih.gov/tools/primer-blast/index.cgi?LINK_LOC=bookmark"
         f"&INPUT_SEQUENCE={search_sequence}"
@@ -282,7 +278,31 @@ def blast_results(
     guide_name,
     return_all,
 ):
-    """Get results from Blast primers site and find off-targets"""
+    """
+    1. Get results from Blast primers site and find off-targets.
+    2. Parsing all results found. 
+    3. If off-target is inside the search sequence it to be on-target. 
+    4. For each pair of primers we count number of off-targets:
+        a. score_1nt - proportion of complimentary nucleotides for last one nucleotide. 
+           bad_count_1nt - number of off-targets which have complimentary last one nucleotide.
+           If score_1nt = 0 it means that all off-targets for this pair of primers 
+           have non-complimentary last nucleotides to off-target sequence.
+           If score_1nt = 1 it means that at least one off-target for this pair of primers 
+           has complimentary last nucleotide to off-target sequence.
+        b. score_2nt - proportion of complimentary nucleotides for last two nucleotides. 
+           bad_count_2nt - number of off-targets which have complimentary last two nucleotides.
+           If score_2nt = 0 it means that all off-targets for this pair of primers 
+           have non-complimentary last two nucleotides to off-target sequence.
+           If score_2nt = 1 it means that at least one off-target for this pair of primers 
+           has complimentary last two nucleotides to off-target sequence. 
+           If score_2nt = 0.5 it means that at least one off-target for this pair of primers 
+           has complimentary one of two last nucleotides to off-target sequence. 
+        c. score_3nt, score_4nt, score_5nt - similar to score_2nt for last three, 
+           four and five nucleotides respectively.
+    5. Calculate termodynamics parameters for pair of primers.
+    6. Calculate distances to cut site or middle of sequence (if we don't have guide sequence).
+    7. Calculate amplicon size for each pair of primers.
+    """
 
     request_results = requests.get(
         "https://www.ncbi.nlm.nih.gov/tools/primer-blast/primertool.cgi?job_key="
@@ -585,6 +605,11 @@ def blast_results(
 
     return all_primers
 
+"""
+Next templates for gene bank file.
+This file allow to automatically make SnapGene file with all features and primers
+and open it in SnapGene Viewer without pair SnapGene program. 
+"""
 
 TITLE = """LOCUS       {gene_name}        {len_full_sequence} bp DNA     linear   UNA {date_today}
 DEFINITION  {gene_name}.
@@ -685,6 +710,10 @@ def gene_bank_file(
         primer_feature = primer_template(name, seq, date_today, start, end)
         all_primers += primer_feature + "\n"
 
+    
+    """
+    This part make a sequence in Gene Bank format.
+    """
     origin_seq = ""
     for i in range(len(full_sequence)):
         if i % 60 == 0:
@@ -699,13 +728,6 @@ def gene_bank_file(
     gbk_file_name = os.path.join(
         "src", "static", "outputs", gene_name, files_name + ".gbk"
     )
-    # gbk_file_name = (
-    #     "src/static/outputs/"
-    #     + gene_name
-    #     + "/"
-    #     + files_name
-    #     + ".gbk"
-    # )
 
     with open(gbk_file_name, "w", encoding="utf-8") as file:
         file.write(title + "\n")
@@ -716,7 +738,10 @@ def gene_bank_file(
 
 
 def find_elements(sequence, guide_seq, guide_name, selected_primers, is_guide=True):
-    """Make lists with guide and primer positions for Snap gene file"""
+    """
+    Make lists with guide and primer positions for SnapGene file.
+    If we don't have guide, we don't have features in SnapGene file.
+    """
 
     if is_guide:
         start_guide = len(sequence.split(guide_seq)[0]) + 1
@@ -730,16 +755,10 @@ def find_elements(sequence, guide_seq, guide_name, selected_primers, is_guide=Tr
     for name, seq in zip(
         selected_primers["left_name"], selected_primers["Sequence (5'->3')_L"]
     ):
-        start_primer = len(sequence.split(seq)[0]) + 1
-        # end_primer = start_primer + len(seq)
-        # oligos.append([name, seq, start_primer, end_primer])
         oligos.append([name, seq, 1, len(seq)])
     for name, seq in zip(
         selected_primers["right_name"], selected_primers["Sequence (5'->3')_R"]
     ):
-        start_primer = len(sequence.split(seq)[0]) + 1
-        # end_primer = start_primer + len(seq)
-        # oligos.append([name, seq, start_primer, end_primer])
         oligos.append([name, seq, 1, len(seq)])
 
     return elements_list, oligos
@@ -756,9 +775,11 @@ def primers_pivot_table(
     max_size,
     insert_seq,
 ):
-    """Make a pivot table with amplicon sizes for all possible primers combinations"""
-
-    # compl_dict = {"A": "T", "T": "A", "G": "C", "C": "G"}
+    """
+    Make a pivot table with amplicon sizes for all possible primers combinations.
+    This data used if we want to check all selected primers for one guide or search sequence between each other. 
+    In table are pairs which satisfy the conditions of amplicon range and dictances range. 
+    """
 
     all_primers_dist = []
 
@@ -814,9 +835,12 @@ def primers_pivot_table(
 def primers_pivot_table_few_guides(
     primers_table, min_dist, max_dist, min_size, max_size, save_name
 ):
-    """Make a pivot table with amplicon sizes for all possible primers combinations for all guides in table"""
-
-    # compl_dict = {"A": "T", "T": "A", "G": "C", "C": "G"}
+    """
+    Make a pivot table with amplicon sizes for all possible primers combinations for all guides in table.
+    This data used if we want to check all selected primers for few guides or search sequence between each other. 
+    In table are pairs which satisfy the conditions of amplicon range and dictances range. 
+    
+    """
 
     all_primers_dist = []
     all_primers_ampl = []
@@ -879,7 +903,7 @@ def primers_pivot_table_few_guides(
 
 
 def primers_coords(ensemble_gene_seq, selected_primers):
-    """Find primers coordinates in gene sequence"""
+    """Find primers coordinates in ensemble gene sequence"""
 
     compl_dict = {"A": "T", "T": "A", "G": "C", "C": "G"}
 

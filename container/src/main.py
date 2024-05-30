@@ -58,6 +58,7 @@ out_dict_outer = {
     "amplicon_end": "",
 }
 
+# This dict used to clean all forms. 
 out_dict_start = out_dict_outer.copy()
 
 out_keys_clean = []
@@ -117,7 +118,6 @@ def index(out_dict):
 
     short_links = {"Blast": out_dict["blast_url"]}
 
-    # out_dict["error_message"] = ''
     out_dict["gene_dict"] = ""
 
     # Show all primers
@@ -162,7 +162,7 @@ def index(out_dict):
                     checked=False,
                 )
 
-            # Insert sequence
+            # Insert sequence (if we don't have guide sequence or gene information)
             insert_seq = gene_info_form.text_field8.data
             out_dict["insert_seq"] = insert_seq
             insert_seq = insert_seq.upper()
@@ -182,6 +182,7 @@ def index(out_dict):
                 out_dict["insert_seq"] = insert_seq
 
                 if guide_seq == "":
+                    # If we have only search sequence
                     primer5_start = ""
                     primer5_end = ""
                     primer3_start = ""
@@ -189,14 +190,12 @@ def index(out_dict):
                     out_dict["search_sequence"] = insert_seq
 
                 else:
+                    """
+                    If we have search sequence and guide sequence.
+                    Find cut site position and coordinates of left and right possible primer
+                    positions in search_sequence.
+                    """
                     out_dict["strand"] = "+"
-                    # cut_size = len(insert_seq.split(guide_seq)[0]) + len(guide_seq)//2
-                    # primer5_start = 1
-                    # primer5_end = cut_size - out_dict["min_dist"]
-                    # primer3_start = cut_size + out_dict["min_dist"]
-                    # primer3_end = len(insert_seq)
-
-                    # out_dict['full_guide_seq'] = guide_seq
 
                     try:
                         guide_full_seq = guide_info(
@@ -217,7 +216,6 @@ def index(out_dict):
                             left_flank + out_dict["guide_full_seq"] + right_flank
                         )
                         out_dict["search_sequence"] = search_sequence
-                        # cut_size = len(search_sequence)//2
                         cut_size = (
                             len(search_sequence.split(out_dict["guide_full_seq"])[0])
                             + len(out_dict["guide_full_seq"]) // 2
@@ -245,18 +243,18 @@ def index(out_dict):
                             checked=False,
                         )
 
+                """
+                If we don't have gene information we can't distinguish on-target and off-taget.
+                In this case all blast hits are off-targets.
+                """
+
                 out_dict["amplicon_start"] = -1
                 out_dict["amplicon_end"] = -1
                 out_dict["gene_nt_id"] = ""
-
-                # out_dict['search_sequence'] = insert_seq
-
                 out_dict["guide_name"] = guide_name
-
                 checkbox_all_cond = True
 
-                # Create output directory
-                # output_directory = "src/static/outputs/" + gene_name
+                # Create output directory or clean if directory is exist.
                 output_directory = os.path.join("src", "static", "outputs", gene_name)
                 try:
                     shutil.rmtree(output_directory)
@@ -265,6 +263,7 @@ def index(out_dict):
                 os.makedirs(output_directory, exist_ok=True)
 
             if insert_seq == "":
+                #If we have gene information and guide sequence
                 if (gene_name == "") | (ncbi_id == "") | (guide_seq == ""):
                     text_error = "If you want to search new primers, enter all the data"
                     out_dict["gene_dict"] = (
@@ -288,7 +287,6 @@ def index(out_dict):
                 out_dict["guide_name"] = guide_name
 
                 # Create output directory
-                # output_directory = "src/static/outputs/" + gene_name
                 output_directory = os.path.join("src", "static", "outputs", gene_name)
 
                 try:
@@ -297,19 +295,8 @@ def index(out_dict):
                     pass
                 os.makedirs(output_directory, exist_ok=True)
 
-                # try:
-                #     out_dict["min_dist"] = int(min_dist)
-                #     out_dict["max_dist"] = int(max_dist)
-                #     out_dict["min_size"] = int(min_size)
-                #     out_dict["max_size"] = int(max_size)
-                # except Exception as e:
-                #     text_error = 'primer position parameters must be > 0'
-                #     out_dict["gene_dict"] = ("<span class='red-text'>"
-                #                             + 'Error: ' + str(text_error)
-                #                             + "</span>")
-                #     return render_template("home.html", out_dict=out_dict, forms=forms, links=short_links)
-
                 try:
+                    # Get gene information from ensemble database
                     ensemble_gene_seq, gene_dict, strand = ensemble_info(gene_name)
                     out_dict["ensemble_gene_seq"] = ensemble_gene_seq
                     out_dict["strand"] = strand
@@ -332,6 +319,10 @@ def index(out_dict):
                     )
 
                 try:
+                    """ Get guide full sequence on one gene strand.
+                    It included both guides and sequence between them for TGEE
+                    and one guide sequence on gene strand for Cas9.
+                    """
                     guide_full_seq = guide_info(
                         out_dict["guide_seq"],
                         out_dict["ensemble_gene_seq"],
@@ -339,6 +330,7 @@ def index(out_dict):
 
                     out_dict["guide_full_seq"] = guide_full_seq
 
+                    # Make sequence where search primers. 
                     left_flank = ensemble_gene_seq.split(out_dict["guide_full_seq"])[0][
                         -out_dict["max_dist"] :
                     ]
@@ -350,17 +342,15 @@ def index(out_dict):
                         left_flank + out_dict["guide_full_seq"] + right_flank
                     )
                     out_dict["search_sequence"] = search_sequence
-                    # cut_size = len(search_sequence)//2
                     cut_size = (
                         len(search_sequence.split(out_dict["guide_full_seq"])[0])
                         + len(out_dict["guide_full_seq"]) // 2
                     )
 
-                    # primer5_start = 1
+                    # Possible coordinates for left and right primers
                     primer5_start = cut_size - out_dict["max_dist"]
                     primer5_end = cut_size - out_dict["min_dist"]
                     primer3_start = cut_size + out_dict["min_dist"]
-                    # primer3_end = len(search_sequence)
                     primer3_end = cut_size + out_dict["max_dist"]
 
                 except Exception:
@@ -381,6 +371,7 @@ def index(out_dict):
                     )
 
                 try:
+                    # Get ncbi gene information
                     amplicon_start, amplicon_end, gene_nt_id = ncbi_info(
                         out_dict["ncbi_id"],
                         out_dict["strand"],
@@ -406,6 +397,7 @@ def index(out_dict):
                         checked=False,
                     )
 
+            # Get url for Blast Primers tool with all nessesary parameters.
             blast_url = blast_primers(
                 out_dict["search_sequence"],
                 primer5_start,
@@ -424,13 +416,10 @@ def index(out_dict):
             out_dict["blast_id"] = blast_id
 
             checkbox_all_value = request.form.get("checkbox_all")
-
-            # if checkbox_all_value == "all_results":
             return_all = checkbox_all_value == "all_results"
-            # else:
-            #     return_all = False
 
             try:
+                # Get all results from Blast Primers tool and compute nessesary parameters
                 all_primers = blast_results(
                     out_dict["blast_id"],
                     out_dict["gene_nt_id"],
@@ -455,21 +444,14 @@ def index(out_dict):
                     checked=False,
                 )
 
+            # Save all found primers to flask table
             tables = [all_primers.to_html(classes="data")]
             out_dict["tables"] = tables
             out_dict["tables_df"] = [all_primers]
 
             selected_ids = request.form.getlist("checkbox")
 
-            # # Example DataFrame
-            # all_primers = pd.DataFrame({
-            #     'ID': [1, 2, 3],
-            #     'Name': ['Primer1', 'Primer2', 'Primer3'],
-            #     'Sequence': ['ATCG', 'CGTA', 'GTAC'],
-            #     # Add other columns as necessary
-            # })
-
-            # Add a column for checkboxes
+            # Add a column for checkboxes to choose good primers
             all_primers["ID_index"] = all_primers.index
             all_primers["ID"] = all_primers["ID_index"].apply(
                 lambda x: f'<input type="checkbox" name="checkbox" value="{x}">'
@@ -501,7 +483,7 @@ def index(out_dict):
                     tables=[],
                     checked=False,
                 )
-            # else:
+            # Get all selected primers ID and filter table
             selected_ids = request.form.getlist("checkbox")
 
             all_primers_selected = out_dict["all_primers"][
@@ -549,8 +531,6 @@ def index(out_dict):
                 out_dict["gene_name"],
                 out_dict["guide_name"] + "_selected_primers.csv",
             )
-            # all_primers_selected.to_csv('src/static/outputs/' + out_dict["gene_name"]  + '/' + out_dict["guide_name"]
-            #                 + '_selected_primers.csv', index=None)
             all_primers_selected.to_csv(file_path, index=None)
 
             file_names = (
@@ -561,7 +541,7 @@ def index(out_dict):
                 + "_"
                 + DATE_TODAY
             )
-
+            # Lists for guide and primers for SnapGene file
             if (out_dict["insert_seq"] != "") & (out_dict["guide_seq"] == ""):
                 elements_list, oligos = find_elements(
                     out_dict["search_sequence"],
@@ -579,6 +559,7 @@ def index(out_dict):
                     is_guide=True,
                 )
 
+            # Make Gene Bank file for SnapGene tool
             gene_bank_file(
                 out_dict["gene_name"],
                 out_dict["search_sequence"],
@@ -588,6 +569,7 @@ def index(out_dict):
                 oligos=oligos,
             )
 
+            # Make a table with amplicon sizes all possible combination between selected primers.
             primers_pivot_table(
                 all_primers_selected,
                 out_dict["gene_name"],
@@ -600,7 +582,6 @@ def index(out_dict):
                 out_dict["insert_seq"],
             )
 
-            # output_files = os.listdir('src/static/outputs/' + out_dict["gene_name"] + '/')
             files_path = os.path.join(
                 "src", "static", "outputs", out_dict["gene_name"]
             )
@@ -618,8 +599,6 @@ def index(out_dict):
                     file_path = os.path.join(
                         "src", "static", "outputs", out_dict["gene_name"], file_name
                     )
-                    # zip_file.write('src/static/outputs/' + out_dict["gene_name"] + '/' + file_name,
-                    #             arcname=file_name)
                     zip_file.write(file_path, arcname=file_name)
 
             # Move the buffer's position to the beginning to ensure all the data is read
@@ -632,6 +611,7 @@ def index(out_dict):
                 as_attachment=True,
             )
         if "clear_forms_submit" in request.form:
+            # Clear all forms
             for key in out_dict.keys():
                 if key in out_dict_start.keys():
                     out_dict[key] = out_dict_start[key]
@@ -639,7 +619,7 @@ def index(out_dict):
                     out_dict[key] = ""
 
         if "file_upload_submit" in request.form:
-            # upload fasta file with new element
+            # upload fasta file with found primers for few guides
             if "file" not in request.files:
                 return "No file part"
 
@@ -655,7 +635,10 @@ def index(out_dict):
             elif file_type == "xlsx":
                 primers_table = pd.read_excel(file)
 
-            # out_dict['tables'] = [primers_table.to_html(classes='data')]
+            """
+            Make a table with amplicon sizes and distances all possible combination 
+            between selected primers for few guides. 
+            """
 
             primers_pivot_table_few_guides(
                 primers_table,
@@ -665,15 +648,6 @@ def index(out_dict):
                 out_dict["max_size"],
                 save_name,
             )
-
-            # file_path = 'src/static/outputs/' + save_name  + '_distances.csv'
-
-            # #Return the csv file as an attachment
-            # return send_file(
-            #     file_path,
-            #     download_name=save_name  + '_distances.csv',
-            #     as_attachment=True,
-            # )
 
             file_names = save_name + "_distances.csv" + "_" + DATE_TODAY
 
@@ -687,8 +661,6 @@ def index(out_dict):
                 file_path = os.path.join(
                     "src", "static", "outputs", save_name + "_distances.csv"
                 )
-                # zip_file.write('src/static/outputs/' + save_name  + '_distances.csv',
-                #             arcname=save_name  + '_distances.csv')
                 zip_file.write(file_path, arcname=save_name + "_distances.csv")
 
             # Move the buffer's position to the beginning to ensure all the data is read
@@ -727,7 +699,6 @@ def index(out_dict):
             links=short_links,
             tables=out_dict["tables"],
             checked=checkbox_all_cond
-            #    data=data
         )
 
     # Save selected parameters to input windows
@@ -756,7 +727,6 @@ def index(out_dict):
         links=short_links,
         tables=out_dict["tables"],
         checked=checkbox_all_cond
-        #    data=data
     )
 
 
