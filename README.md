@@ -4,11 +4,9 @@ docker build -t dockerfile:primerdesign ./
 docker run -p 5000:5000 -d dockerfile:primerdesign
 
 ## docker hub
-docker tag dockerfile:vflask1 mdyakova/hdr_donor_for_crisprcas9:flaskv1 
+docker tag dockerfile:primerdesign mdyakova/primer_design_tool:v1
 docker login
-docker push mdyakova/hdr_donor_for_crisprcas9:flaskv1
-
-
+docker push mdyakova/primer_design_tool:v1
 
 ## Check code quality
 python3 -m black main.py

@@ -7,7 +7,6 @@ import zipfile
 import shutil
 from datetime import date
 import pandas as pd
-# import numpy as np
 
 from flask import Flask, render_template, request, send_file
 from flask_wtf import FlaskForm
