@@ -7,6 +7,7 @@ import zipfile
 import shutil
 from datetime import date
 import pandas as pd
+import json
 
 from flask import Flask, render_template, request, send_file
 from flask_wtf import FlaskForm
@@ -32,37 +33,18 @@ DATE_TODAY = str(date.today())
 
 
 # dictionary with all useful variables necessary to save throw whole pipeline
-out_dict_outer = {
-    "gene_name": "",
-    "ncbi_id": "",
-    "guide_seq": "",
-    "guide_name": "",
-    "min_dist": 50,
-    "max_dist": 150,
-    "min_size": 150,
-    "max_size": 300,
-    "gene_dict": "",
-    "ensemble_gene_seq": "",
-    "strand": "",
-    "guide_full_seq": "",
-    "search_sequence": "",
-    "blast_url": "https://www.ncbi.nlm.nih.gov/tools/primer-blast/",
-    "blast_id": "",
-    "gene_nt_id": "",
-    "tables": [],
-    "tables_df": [],
-    "all_primers": [],
-    "insert_seq": "",
-    "amplicon_start": "",
-    "amplicon_end": "",
-}
+
+with open('config.json', 'r') as f:
+    config = json.load(f)
+
+out_dict_outer = config['initial_values']
 
 # This dict used to clean all forms. 
 out_dict_start = out_dict_outer.copy()
 
 out_keys_clean = []
 
-compl_dict = {"A": "T", "T": "A", "C": "G", "G": "C", "-": "-"}
+compl_dict = config['compl_dict']
 
 
 class GeneInfo(FlaskForm):

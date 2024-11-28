@@ -9,6 +9,7 @@ Welcome to the **Primer Design Tool**, a user-friendly tool for designing primer
 - **Customizable Parameters**: Allows users to specify primer length, Tm range, and product size.
 - **Gene Editing Focus**: Targets regions modified by CRISPR, TALENs, or other genome editing technologies.
 - **Dockerized**: Simple and consistent deployment across platforms.
+- **Snapgene of Genebank format for results**: Save results in Snapgene of Genebank format. 
 
 ## Prerequisites
 
